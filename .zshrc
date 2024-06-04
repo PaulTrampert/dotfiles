@@ -32,4 +32,4 @@ precmd_functions+=( vcs_info )
 setopt prompt_subst
 zstyle ':vcs_info:git:*' formats '%F{yellow}[%b]%f '
 
-PROMPT='$vcs_info_msg_0_%F{green}%n@%m%f:%F{blue}%~%f%# '
+PROMPT='$vcs_info_msg_0_%F{green}%n@%m%f:%F{blue}%1d%f%# '
