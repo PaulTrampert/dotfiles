@@ -25,6 +25,7 @@ source ~/.zkbd/$TERM-${${DISPLAY:t}:-$VENDOR-$OSTYPE}
 [[ -n ${key[End]} ]] && bindkey "${key[End]}" end-of-line
 [[ -n ${key[Delete]} ]] && bindkey "${key[Delete]}" delete-char
 
+zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}'
 
 autoload -Uz vcs_info
 precmd_functions+=( vcs_info )
