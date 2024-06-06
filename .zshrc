@@ -18,6 +18,7 @@ if [[ ! -a ~/.zkbd/$TERM-${${DISPLAY:t}:-$VENDOR-$OSTYPE} ]]; then
     zkbd
 fi
 
+
 source ~/.zkbd/$TERM-${${DISPLAY:t}:-$VENDOR-$OSTYPE}
 [[ -n ${key[CtrlLeft]} ]] && bindkey "${key[CtrlLeft]}" backward-word
 [[ -n ${key[CtrlRight]} ]] && bindkey "${key[CtrlRight]}" forward-word
@@ -35,5 +36,7 @@ zstyle ':vcs_info:git:*' check-for-changes true
 zstyle ':vcs_info:git:*' stagedstr '%F{yellow}' 
 zstyle ':vcs_info:git:*' unstagedstr '%F{red}' 
 zstyle ':vcs_info:git:*' formats "%F{cyan}%c%u[%b]%f "
+
+alias ls="ls --color=auto"
 
 PROMPT='$vcs_info_msg_0_%F{green}%n@%m%f:%F{blue}%~%f%# '
