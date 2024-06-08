@@ -13,6 +13,8 @@ autoload -Uz compinit
 compinit
 # End of lines added by compinstall
 
+autoload -U +X bashcompinit && bashcompinit
+
 autoload zkbd
 if [[ ! -a ~/.zkbd/$TERM-${${DISPLAY:t}:-$VENDOR-$OSTYPE} ]]; then
     zkbd
