@@ -15,6 +15,9 @@ compinit
 
 autoload -U +X bashcompinit && bashcompinit
 
+export EDITOR=vim
+export PATH=$PATH:~/.local/bin
+
 autoload zkbd
 if [[ ! -a ~/.zkbd/$TERM-${${DISPLAY:t}:-$VENDOR-$OSTYPE} ]]; then
     zkbd
