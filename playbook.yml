@@ -1,0 +1,16 @@
+---
+- name: Place dotfiles
+  hosts: localhost
+  connection: local
+  become: false
+
+  tasks:
+    - name: Copy zsh config
+      ansible.builtin.copy:
+        src: .zshrc
+        dest: "{{ansible_env.HOME}}/.zshrc"
+
+    - name: Copy rclone config
+      ansible.builtin.copy:
+        src: .config/systemd/user/rclone@.service
+        dest: "{{ansible_env.HOME}}/.config/systemd/user/rclone@.service"
