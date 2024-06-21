@@ -1,0 +1,4 @@
+#! /usr/bin/env bash
+
+git branch -l | grep ^[^\*] | xargs git branch -D
+git fetch -ap
