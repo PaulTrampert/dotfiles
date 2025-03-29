@@ -8,27 +8,29 @@
     - name: Copy zsh config
       ansible.builtin.copy:
         src: .zshrc
-        dest: "{{ansible_env.HOME}}/.zshrc"
+        dest: "{{ ansible_env.HOME }}/.zshrc"
+        mode: "0755"
 
     - name: Ensure systemd user directory exists
       ansible.builtin.file:
-        path: "{{ansible_env.HOME}}/.config/systemd/user"
+        path: "{{ ansible_env.HOME }}/.config/systemd/user"
         recurse: true
         state: directory
 
     - name: Copy rclone config
       ansible.builtin.copy:
         src: .config/systemd/user/rclone@.service
-        dest: "{{ansible_env.HOME}}/.config/systemd/user/rclone@.service"
+        dest: "{{ ansible_env.HOME }}/.config/systemd/user/rclone@.service"
+        mode: "0755"
 
     - name: Ensure local bin directory exists
       ansible.builtin.file:
-        path: "{{ansible_env.HOME}}/.local/bin"
+        path: "{{ ansible_env.HOME }}/.local/bin"
         recurse: true
         state: directory
 
     - name: Copy local bin scripts
       ansible.builtin.copy:
         src: .local/bin/
-        dest: "{{ansible_env.HOME}}/.local/bin/"
-        mode: preserve
+        dest: "{{ ansible_env.HOME }}/.local/bin/"
+        mode: "0755"
