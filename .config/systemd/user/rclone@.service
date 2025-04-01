@@ -25,7 +25,7 @@ ExecStart= \
     --log-file /tmp/rclone-%i.log \
     --umask 022 \
     %i: %h/%i
-ExecStop=/bin/fusermount -u %h/%i
+ExecStop=/usr/bin/fusermount -u %h/%i
 
 [Install]
 WantedBy=default.target
