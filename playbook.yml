@@ -3,7 +3,13 @@
   hosts: localhost
   connection: local
   become: false
-
+  vars_prompt:
+    - name: git_user_name
+      prompt: "Enter your Git user name"
+      private: false
+    - name: git_user_email
+      prompt: "Enter your Git user email"
+      private: false
   tasks:
     - name: Copy zsh config
       ansible.builtin.copy:
@@ -34,3 +40,9 @@
         src: .local/bin/
         dest: "{{ ansible_env.HOME }}/.local/bin/"
         mode: "0755"
+
+    - name: Copy git config
+      ansible.builtin.template:
+        src: .gitconfig.j2
+        dest: "{{ ansible_env.HOME }}/.gitconfig"
+        mode: "0644"
