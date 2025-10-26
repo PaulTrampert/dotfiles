@@ -45,3 +45,8 @@ zstyle ':vcs_info:git:*' formats "%F{cyan}%c%u[%b]%f "
 alias ls="ls --color=auto"
 
 PROMPT='$vcs_info_msg_0_%F{green}%n@%m%f:%F{blue}%~%f%# '
+
+# Only run fastfetch if it's available on the PATH
+if command -v fastfetch >/dev/null 2>&1; then
+    fastfetch
+fi
