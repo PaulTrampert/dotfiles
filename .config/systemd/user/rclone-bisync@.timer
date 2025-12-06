@@ -1,0 +1,10 @@
+[Unit]
+Description=Rclone bisync timer for remote %i
+Documentation=man:rclone(1)
+Conflicts=rclone@%i.service
+
+[Timer]
+OnUnitInactiveSec=60
+
+[Install]
+WantedBy=timers.target

@@ -37,10 +37,10 @@
         recurse: true
         state: directory
 
-    - name: Copy rclone config
+    - name: Copy user .config files
       ansible.builtin.copy:
-        src: .config/systemd/user/rclone@.service
-        dest: "{{ ansible_env.HOME }}/.config/systemd/user/rclone@.service"
+        src: .config/
+        dest: "{{ ansible_env.HOME }}/.config/"
         mode: "0755"
 
     - name: Ensure local bin directory exists
