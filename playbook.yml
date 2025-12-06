@@ -8,10 +8,10 @@
     - name: Display platform details
       ansible.builtin.debug:
         msg: |
-          Distribution: {{ ansible_distribution }}
-          Version: {{ ansible_distribution_major_version }}
-          OS Family: {{ ansible_os_family }}
-          System: {{ ansible_system }}
+          Distribution: {{ ansible_facts['distribution'] }}
+          Version: {{ ansible_facts['distribution_major_version'] }}
+          OS Family: {{ ansible_facts['os_family'] }}
+          System: {{ ansible_facts['system'] }}
 
 - name: Place dotfiles
   hosts: localhost
@@ -28,35 +28,35 @@
     - name: Copy zsh config
       ansible.builtin.copy:
         src: .zshrc
-        dest: "{{ ansible_env.HOME }}/.zshrc"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.zshrc"
         mode: "0755"
 
     - name: Ensure systemd user directory exists
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.config/systemd/user"
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user"
         recurse: true
         state: directory
 
     - name: Copy user .config files
       ansible.builtin.copy:
         src: .config/
-        dest: "{{ ansible_env.HOME }}/.config/"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/"
         mode: "0755"
 
     - name: Ensure local bin directory exists
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.local/bin"
+        path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
         recurse: true
         state: directory
 
     - name: Copy local bin scripts
       ansible.builtin.copy:
         src: .local/bin/
-        dest: "{{ ansible_env.HOME }}/.local/bin/"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/"
         mode: "0755"
 
     - name: Copy git config
       ansible.builtin.template:
         src: .gitconfig.j2
-        dest: "{{ ansible_env.HOME }}/.gitconfig"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.gitconfig"
         mode: "0644"
