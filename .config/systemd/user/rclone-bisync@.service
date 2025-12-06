@@ -10,6 +10,7 @@
 Description=Rclone bisync service for remote %i. Controlled by rclone-bisync@%i.timer
 Documentation=man:rclone(1)
 Conflicts=rclone@%i.service
+OnFailure=error-notify@%n.service
 
 [Service]
 Type=oneshot
