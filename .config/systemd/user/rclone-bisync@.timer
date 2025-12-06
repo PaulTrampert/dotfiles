@@ -4,7 +4,7 @@ Documentation=man:rclone(1)
 Conflicts=rclone@%i.service
 
 [Timer]
-OnUnitInactiveSec=60
+OnUnitInactiveSec=300
 
 [Install]
 WantedBy=timers.target
