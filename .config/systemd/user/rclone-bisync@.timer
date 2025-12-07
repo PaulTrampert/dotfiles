@@ -4,6 +4,7 @@ Documentation=man:rclone(1)
 Conflicts=rclone@%i.service
 
 [Timer]
+OnStartupSec=30
 OnUnitInactiveSec=300
 
 [Install]

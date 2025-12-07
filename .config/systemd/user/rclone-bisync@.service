@@ -23,5 +23,5 @@ ExecStart= \
     --max-lock 2m \
     --log-level INFO \
     --log-file /tmp/rclone-bisync-%i.log \
-    --filters-file %h/.config/rclone/%i.filters
+    --filters-file %h/.config/rclone/%i.filters \
     %h/%i/ %i:
