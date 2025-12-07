@@ -20,6 +20,7 @@ ExecStart= \
     --config=%h/.config/rclone/rclone.conf \
     --resilient \
     --recover \
+    --check-access \
     --max-lock 2m \
     --log-level INFO \
     --filters-file %h/.config/rclone/%i.filters \
