@@ -13,6 +13,7 @@ Documentation=man:rclone(1)
 After=network-online.target
 Wants=network-online.target
 Conflicts=rclone-bisync@%i.service rclone-bisync@%i.timer
+StopWhenUnneeded=true
 
 [Service]
 Type=notify
@@ -27,7 +28,7 @@ ExecStart= \
     --log-file /tmp/rclone-%i.log \
     --umask 022 \
     %i: %h/%i
-ExecStop=/usr/bin/fusermount -u %h/%i
+ExecStop=/usr/bin/fusermount -uz %h/%i
 
 [Install]
 WantedBy=default.target
