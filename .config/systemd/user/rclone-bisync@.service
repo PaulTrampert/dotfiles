@@ -9,11 +9,17 @@
 [Unit]
 Description=Rclone bisync service for remote %i. Controlled by rclone-bisync@%i.timer
 Documentation=man:rclone(1)
+After=network-online.target
+Wants=network-online.target
 Conflicts=rclone@%i.service
 OnFailure=error-notify@%n.service
 
 [Service]
 Type=oneshot
+# rclone exit code 5 is "temporary error (one that more retries might fix)",
+# e.g. the network dropped or the remote returned 5xx. Treat it as success so
+# OnFailure= does not notify; the timer retries a few minutes later anyway.
+SuccessExitStatus=5
 ExecStartPre=-/usr/bin/mkdir -p %h/%i
 ExecStart= \
   /usr/bin/rclone bisync \
