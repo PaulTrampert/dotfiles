@@ -29,19 +29,42 @@ automatically (its partition type is "Linux root (x86-64)").
 
 Step 3 creates a real command-line file, which replaces the ISO leftovers.
 
-## Step 0: Make a rollback copy
-
-```sh
-sudo cp /boot/EFI/Linux/arch-linux.efi /boot/EFI/Linux/arch-linux-backup.efi
-```
-
-systemd-boot automatically lists every `.efi` file in `/boot/EFI/Linux/`, so this copy appears as
-its own boot menu entry. The copy is already signed, so it works with Secure Boot. If the new image
-doesn't boot, hold **Space** at power-on to open the menu and pick the backup. Delete the copy once
-the new setup works.
+## Step 0: Enable the fallback image
 
 The mkinitcpio preset builds no "fallback" image, and Secure Boot stops you editing the command line
-from the boot menu, so this copy is the safety net.
+from the boot menu, so turn the fallback on as a safety net. Give it its own frozen config and
+command line, so the changes below never reach it:
+
+```sh
+sudo cp /etc/mkinitcpio.conf /etc/mkinitcpio-fallback.conf
+echo 'rw' | sudo tee /etc/kernel/cmdline-fallback
+```
+
+Make the copy now, before step 2 edits `/etc/mkinitcpio.conf`. Then, in
+`/etc/mkinitcpio.d/linux.preset`, change these lines:
+
+```sh
+PRESETS=('default' 'fallback')
+
+fallback_config="/etc/mkinitcpio-fallback.conf"
+fallback_uki="/boot/EFI/Linux/arch-linux-fallback.efi"
+fallback_options="-S autodetect --cmdline /etc/kernel/cmdline-fallback"
+```
+
+- `fallback_config` builds the fallback from the pre-Plymouth hooks, whatever later happens to
+  `/etc/mkinitcpio.conf`.
+- `--cmdline` embeds the fallback's own command line instead of the one from step 3, so it boots
+  with full text output (no `quiet` or `splash`).
+- `-S autodetect` skips the `autodetect` hook, which includes every module rather than only the
+  ones this hardware uses.
+- The stock commented-out `fallback_uki` points at `/efi`, but this machine's ESP is `/boot`.
+
+The fallback is built by `mkinitcpio -P` in step 5, alongside the main image, and again with every
+kernel update, so it never falls behind the installed kernel. Only edits to its own two files change
+it. sbctl's mkinitcpio hook signs every UKI it builds, so the fallback works with Secure Boot.
+systemd-boot automatically lists every `.efi` file in `/boot/EFI/Linux/`, so it appears as its own
+boot menu entry. If the new image doesn't boot, hold **Space** at power-on to open the menu and pick
+the fallback.
 
 ## Step 1: Install Plymouth
 
@@ -101,9 +124,9 @@ sudo sbctl verify
 
 Make sure the rebuild output shows no errors and contains a line about the `plymouth` hook. sbctl
 installs a hook that re-signs the UKI automatically after a rebuild. Still, check that
-`sbctl verify` shows `/boot/EFI/Linux/arch-linux.efi` as signed before rebooting. If it doesn't,
-run `sudo sbctl sign -s /boot/EFI/Linux/arch-linux.efi`. With Secure Boot on, an unsigned image
-won't boot.
+`sbctl verify` shows both `/boot/EFI/Linux/arch-linux.efi` and
+`/boot/EFI/Linux/arch-linux-fallback.efi` as signed before rebooting. If one isn't, run
+`sudo sbctl sign -s` on it. With Secure Boot on, an unsigned image won't boot.
 
 ## Optional: Test before rebooting
 
@@ -117,8 +140,8 @@ sudo plymouthd; sudo plymouth --show-splash; sleep 5; sudo plymouth --quit
 
 - **Black screen or no splash, but it still boots:** check `journalctl -b | grep -i plymouth`.
   Usually the hook is in the wrong place or `splash` is missing from the command line.
-- **Won't boot at all:** pick `arch-linux-backup` from the systemd-boot menu (hold Space), then undo
-  the changes and run `mkinitcpio -P` again.
+- **Won't boot at all:** pick `arch-linux-fallback` from the systemd-boot menu (hold Space), then
+  undo the changes and run `mkinitcpio -P` again.
 - **Neither image boots:** boot the Arch ISO, unlock the drive with
   `cryptsetup open /dev/nvme1n1p2 root`, mount it and `/boot`, then `arch-chroot` in and undo the
   changes.
