@@ -87,8 +87,7 @@ HOOKS=(base systemd plymouth autodetect microcode modconf kms keyboard sd-vconso
 ## Step 3: Create a kernel command line
 
 ```sh
-sudo mkdir /etc/cmdline.d
-echo 'rw quiet splash' | sudo tee /etc/cmdline.d/root.conf
+echo 'rw quiet splash' | sudo tee /etc/kernel/cmdline
 ```
 
 - `quiet` hides kernel messages, and `splash` tells Plymouth to show graphics.
@@ -97,6 +96,24 @@ echo 'rw quiet splash' | sudo tee /etc/cmdline.d/root.conf
   messages and the blinking cursor.
 
 No `root=` or `rd.luks...` options are needed, because root is discovered automatically.
+
+### How mkinitcpio builds the command line
+
+When building a UKI without `--cmdline`, mkinitcpio reads `/etc/kernel/cmdline` (or
+`/usr/lib/kernel/cmdline` if that doesn't exist) **and** every `/etc/cmdline.d/*.conf` file, in
+version-sort order. It skips lines starting with `#` and joins the rest into one line. It copies
+`/proc/cmdline` only when it finds none of these.
+
+One file is enough for this machine. On a machine with more options, the drop-in directory keeps
+each concern in its own file, for example:
+
+```
+/etc/cmdline.d/10-boot.conf     rw quiet splash
+/etc/cmdline.d/20-nvidia.conf   nvidia_drm.modeset=1 nvidia_drm.fbdev=1
+```
+
+Passing `--cmdline <file>` (as the fallback preset does) uses only that file and ignores
+`/etc/cmdline.d`. Passing `--cmdline <directory>` reads that directory instead of `/etc/cmdline.d`.
 
 ## Step 4 (optional): Pick a theme
 
