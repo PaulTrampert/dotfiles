@@ -12,22 +12,11 @@ Documentation=man:rclone(1)
 After=network-online.target
 Wants=network-online.target
 Conflicts=rclone@%i.service
-OnFailure=error-notify@%n.service
+OnFailure=error-notify@%N.service
 
 [Service]
 Type=oneshot
-# rclone exit code 5 is "temporary error (one that more retries might fix)",
-# e.g. the network dropped or the remote returned 5xx. Treat it as success so
-# OnFailure= does not notify; the timer retries a few minutes later anyway.
-SuccessExitStatus=5
 ExecStartPre=-/usr/bin/mkdir -p %h/%i
-ExecStart= \
-  /usr/bin/rclone bisync \
-    --config=%h/.config/rclone/rclone.conf \
-    --resilient \
-    --recover \
-    --check-access \
-    --max-lock 2m \
-    --log-level INFO \
-    --filters-file %h/.config/rclone/%i.filters \
-    %h/%i/ %i:
+# The wrapper decides which rclone failures are worth notifying about; see the
+# comment at the top of it. rclone's own exit codes can't tell them apart.
+ExecStart=%h/.local/bin/rclone-bisync %i

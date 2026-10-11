@@ -1,0 +1,67 @@
+#! /usr/bin/env bash
+
+# Run rclone bisync for a remote, exiting non-zero only when the failure
+# needs a human. Called by rclone-bisync@.service.
+#
+# rclone's exit codes can't make this distinction on their own: bisync funnels
+# every critical abort into exit 7 whether --resilient can recover it or not,
+# and a DNS failure during remote construction exits 1 rather than 5. The log
+# text is what actually carries the signal, so that is what we match on.
+
+set -uo pipefail
+
+remote=${1:?usage: rclone-bisync <remote>}
+
+log=$(mktemp) || exit 1
+trap 'rm -f "$log"' EXIT
+
+# Failures that the next timer run will clear on its own. Extend as new ones
+# show up in: journalctl --user -u "rclone-bisync@$remote.service"
+quiet_patterns=(
+  'retryable without --resync due to --resilient mode'
+  'Temporary failure in name resolution'
+  'no such host'
+  'network is unreachable'
+)
+
+# tee so the journal still gets rclone's output live rather than in one dump
+# at the end; PIPESTATUS[0] is rclone's status rather than tee's.
+rclone bisync \
+  --config="$HOME/.config/rclone/rclone.conf" \
+  --resilient \
+  --recover \
+  --check-access \
+  --max-lock 2m \
+  --log-level INFO \
+  --filters-file "$HOME/.config/rclone/$remote.filters" \
+  "$HOME/$remote/" "$remote:" 2>&1 | tee "$log"
+rc=${PIPESTATUS[0]}
+
+if [ "$rc" -eq 0 ]; then
+  exit 0
+fi
+
+# 143/130 are SIGTERM/SIGINT: shutdown, or the Conflicts= on rclone@<remote>.
+if [ "$rc" -eq 143 ] || [ "$rc" -eq 130 ]; then
+  echo "rclone-bisync: interrupted (exit $rc), not treating as a failure"
+  exit 0
+fi
+
+# Checked before the quiet patterns: this is the one state bisync cannot get
+# itself out of, so it must notify even if something else in the log looks
+# recoverable.
+if grep -qF 'Must run --resync to recover' "$log"; then
+  echo "rclone-bisync: bisync needs a manual --resync (exit $rc)"
+  exit "$rc"
+fi
+
+for pattern in "${quiet_patterns[@]}"; do
+  if grep -qF "$pattern" "$log"; then
+    echo "rclone-bisync: transient failure (exit $rc): $pattern"
+    echo "rclone-bisync: leaving it for the next timer run"
+    exit 0
+  fi
+done
+
+echo "rclone-bisync: unrecognized failure (exit $rc), reporting it"
+exit "$rc"
