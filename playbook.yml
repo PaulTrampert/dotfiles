@@ -24,6 +24,12 @@
     - name: git_user_email
       prompt: "Enter your Git user email"
       private: false
+  handlers:
+    - name: Reload systemd user units
+      ansible.builtin.systemd_service:
+        scope: user
+        daemon_reload: true
+
   tasks:
     - name: Copy zsh config
       ansible.builtin.copy:
@@ -41,7 +47,8 @@
       ansible.builtin.copy:
         src: .config/
         dest: "{{ ansible_facts['env']['HOME'] }}/.config/"
-        mode: "0755"
+        mode: "0644"
+      notify: Reload systemd user units
 
     - name: Ensure local bin directory exists
       ansible.builtin.file:
