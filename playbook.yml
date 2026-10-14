@@ -17,13 +17,9 @@
   hosts: localhost
   connection: local
   become: false
-  vars_prompt:
-    - name: git_user_name
-      prompt: "Enter your Git user name"
-      private: false
-    - name: git_user_email
-      prompt: "Enter your Git user email"
-      private: false
+  vars:
+    git_user_name: Paul Trampert
+    git_user_email: paul.trampert@ptrampert.com
   handlers:
     - name: Reload systemd user units
       ansible.builtin.systemd_service:
