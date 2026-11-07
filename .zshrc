@@ -1,3 +1,18 @@
+_should_start_tmux() {
+    command -v tmux >/dev/null 2>&1 || return 1
+    [[ -o interactive ]] || return 1
+    [[ -z $TMUX && $TERM != (screen|tmux) ]] || return 1
+    [[ -z $INSIDE_EMACS ]] || return 1
+    [[ $TERM_PROGRAM != vscode ]] || return 1
+    [[ $TERMINAL_EMULATOR != JetBrains-JediTerm ]] || return 1
+}
+
+if _should_start_tmux; then
+    unfunction _should_start_tmux
+    exec tmux new-session -A -s main
+fi
+unfunction _should_start_tmux
+
 # Lines configured by zsh-newuser-install
 HISTFILE=~/.histfile
 HISTSIZE=1000
