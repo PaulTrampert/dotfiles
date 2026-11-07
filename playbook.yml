@@ -33,6 +33,12 @@
         dest: "{{ ansible_facts['env']['HOME'] }}/.zshrc"
         mode: "0755"
 
+    - name: Copy vim config
+      ansible.builtin.copy:
+        src: .vimrc
+        dest: "{{ ansible_facts['env']['HOME'] }}/.vimrc"
+        mode: "0644"
+
     - name: Ensure systemd user directory exists
       ansible.builtin.file:
         path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user"
