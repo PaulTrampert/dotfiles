@@ -69,3 +69,128 @@
         src: .gitconfig.j2
         dest: "{{ ansible_facts['env']['HOME'] }}/.gitconfig"
         mode: "0644"
+
+- name: Rootless Docker
+  hosts: localhost
+  connection: local
+  become: false
+  tags:
+    - docker
+  vars:
+    home_dir: "{{ ansible_facts['env']['HOME'] }}"
+    rootless_docker_host: "unix:///run/user/{{ ansible_facts['user_uid'] }}/docker.sock"
+  tasks:
+    - name: Check whether rootful Docker is enabled
+      ansible.builtin.command: systemctl --system is-enabled docker.service docker.socket
+      register: rootful_docker
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Determine Docker mode
+      ansible.builtin.set_fact:
+        rootful_docker_enabled: "{{ 'enabled' in rootful_docker.stdout_lines }}"
+
+    - name: Set up rootless Docker
+      when: not rootful_docker_enabled
+      block:
+        - name: Check for rootless Docker prerequisites
+          ansible.builtin.stat:
+            path: "{{ item }}"
+          loop:
+            - /usr/bin/dockerd
+            - /usr/bin/rootlesskit
+            - /usr/bin/slirp4netns
+            - /usr/bin/newuidmap
+            - /usr/bin/newgidmap
+          register: rootless_prereqs
+
+        - name: Verify rootless Docker prerequisites are installed
+          ansible.builtin.assert:
+            that: missing | length == 0
+            fail_msg: "Missing required binaries: {{ missing | join(', ') }}"
+            quiet: true
+          vars:
+            missing: "{{ rootless_prereqs.results | rejectattr('stat.exists') | map(attribute='item') | list }}"
+
+        - name: Check subordinate ID ranges for the current user
+          ansible.builtin.command: grep -q "^{{ ansible_facts['user_id'] }}:" {{ item }}
+          loop:
+            - /etc/subuid
+            - /etc/subgid
+          changed_when: false
+          check_mode: false
+
+        - name: Ensure systemd user directory exists
+          ansible.builtin.file:
+            path: "{{ home_dir }}/.config/systemd/user"
+            state: directory
+            mode: "0755"
+
+        - name: Install rootless Docker user unit
+          ansible.builtin.copy:
+            src: rootless-docker/docker.service
+            dest: "{{ home_dir }}/.config/systemd/user/docker.service"
+            mode: "0644"
+
+        - name: Enable and start rootless Docker
+          ansible.builtin.systemd_service:
+            name: docker.service
+            scope: user
+            enabled: true
+            state: started
+            daemon_reload: true
+
+        - name: Check for rootless Docker context
+          ansible.builtin.command: docker context inspect rootless
+          register: rootless_context
+          changed_when: false
+          check_mode: false
+          failed_when: false
+
+        - name: Create rootless Docker context
+          ansible.builtin.command: >-
+            docker context create rootless
+            --description "Rootless Docker"
+            --docker host={{ rootless_docker_host }}
+          when: rootless_context.rc != 0
+          changed_when: true
+
+        - name: Get current Docker context
+          ansible.builtin.command: docker context show
+          register: current_context
+          changed_when: false
+          check_mode: false
+
+        - name: Use rootless Docker context
+          ansible.builtin.command: docker context use rootless
+          when: current_context.stdout != 'rootless'
+          changed_when: true
+
+    - name: Disable rootless Docker when rootful Docker is enabled
+      when: rootful_docker_enabled
+      block:
+        - name: Check for rootless Docker user unit
+          ansible.builtin.stat:
+            path: "{{ home_dir }}/.config/systemd/user/docker.service"
+          register: rootless_unit
+
+        - name: Stop and disable rootless Docker
+          ansible.builtin.systemd_service:
+            name: docker.service
+            scope: user
+            enabled: false
+            state: stopped
+          when: rootless_unit.stat.exists
+
+        - name: Get current Docker context
+          ansible.builtin.command: docker context show
+          register: current_context
+          changed_when: false
+          check_mode: false
+          failed_when: false
+
+        - name: Use default Docker context
+          ansible.builtin.command: docker context use default
+          when: current_context.stdout == 'rootless'
+          changed_when: true
