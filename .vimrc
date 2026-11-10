@@ -3,6 +3,9 @@
 unlet! skip_defaults_vim
 source $VIMRUNTIME/defaults.vim
 
+" Show line numbers
+set number
+
 " Indent with spaces, 2 per level by default.
 set expandtab
 set tabstop=2
